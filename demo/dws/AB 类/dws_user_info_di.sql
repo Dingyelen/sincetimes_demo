@@ -17,7 +17,7 @@ adgroup varchar,
 campaign_id varchar,
 creative_id varchar,
 adgroup_id varchar,
-adcost varchar,
+adcost decimal(36, 2),
 is_test bigint,
 install_ts timestamp(3),
 install_date date,
@@ -161,6 +161,14 @@ last_value(free_end) ignore nulls over(partition by role_id order by part_date r
 last_value(paid_end) ignore nulls over(partition by role_id order by part_date rows between unbounded preceding and unbounded following) as paid_end
 from hive.demo_global_w.temp_user_daily;
 
+drop table if exists hive.demo_global_w.temp_user_adcost;
+
+create table if not exists hive.demo_global_w.temp_user_adcost as
+select role_id, 
+sum(ad_cost + ad_cost_noc_apportion + ad_cost_no_apportion + ad_cost_n_apportion) as adcost
+from hive.demo_global_w.dws_adjust_cost_detail_df
+group by 1;
+
 insert into hive.demo_global_w.dws_user_info_di(
 role_id, device_id, open_id, adid, 
 zone_id, alliance_id, os, channel, 
@@ -187,7 +195,7 @@ coalesce(b.zone_id, '') as zone_id, coalesce(b.alliance_id, '') as alliance_id, 
 coalesce(b.ip, '') as ip, coalesce(b.country, '') as country, 
 coalesce(b.network, '') as network, coalesce(b.campaign, '') as campaign, coalesce(b.creative, '') as creative, coalesce(b.adgroup, '') as adgroup, 
 coalesce(b.campaign_id, '') as campaign_id, coalesce(b.creative_id, '') as creative_id, coalesce(b.adgroup_id, '') as adgroup_id, 
-null as adcost, 
+c.adcost, 
 a.is_test, 
 a.install_ts, 
 date(a.install_ts) as install_date, a.lastlogin_ts, 
@@ -206,9 +214,13 @@ a.vip_level, a.level, a.rank, a.power,
 a.login_days, a.login_times, a.online_time
 from hive.demo_global_w.temp_user_info a
 left join hive.demo_global_w.temp_user_first_info b
-on a.role_id = b.role_id;
+on a.role_id = b.role_id
+left join hive.demo_global_w.temp_user_adcost c
+on a.role_id = c.role_id;
+
 
 drop table if exists hive.demo_global_w.temp_user_daily;
 drop table if exists hive.demo_global_w.temp_user_info;
 drop table if exists hive.demo_global_w.temp_user_first_info;
+drop table if exists hive.demo_global_w.temp_user_adcost;
 ###

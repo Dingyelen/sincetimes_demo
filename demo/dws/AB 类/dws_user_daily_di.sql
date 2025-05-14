@@ -174,6 +174,13 @@ where part_date >= $start_date
 and part_date <= $end_date
 ), 
 
+ad_tag as(
+select role_id, 
+sum(ad_cost + ad_cost_noc_apportion + ad_cost_no_apportion + ad_cost_n_apportion) * 7.25 as adcost
+from hive.demo_global_r.dwd_adjust_live
+group by 1
+), 
+
 daily_gserver_info as(
 select part_date, date, role_id, 
 min(event_time) as first_ts,
