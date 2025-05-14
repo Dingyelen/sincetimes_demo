@@ -1,4 +1,3 @@
-###
 create table if not exists hive.demo_global_w.dws_user_daily_di(
 date date, 
 role_id varchar, 
@@ -65,8 +64,8 @@ part_date varchar
 with(partitioned_by = array['part_date']);
 
 delete from hive.demo_global_w.dws_user_daily_di 
-where part_date >= $start_date
-and part_date <= $end_date;
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}';
 
 insert into  hive.demo_global_w.dws_user_daily_di
 (date, role_id, device_id, open_id, adid, 
@@ -89,7 +88,7 @@ core_add, core_cost, core_end,
 free_add, free_cost, free_end, 
 paid_add, paid_cost, paid_end, 
 is_test, part_date)
- 
+
 with base_log as(
 select part_date, event_name, event_time, 
 date(event_time) as date, 
@@ -101,8 +100,8 @@ online_time,
 row_number() over(partition by role_id, part_date, event_name order by event_time) as partevent_rn, 
 row_number() over(partition by role_id, part_date, event_name order by event_time desc) as partevent_descrn
 from hive.demo_global_r.dwd_merge_base_live
-where part_date >= $start_date
-and part_date <= $end_date
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}'
 ), 
 
 core_log_base as(
@@ -115,8 +114,8 @@ reason, event_type,
 coalesce(free_num, 0) as free_num, coalesce(paid_num, 0) as paid_num, 
 coalesce(free_end, 0) as free_end, coalesce(paid_end, 0) as paid_end
 from hive.demo_global_r.dwd_gserver_corechange_live
-where part_date >= $start_date
-and part_date <= $end_date 
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}' 
 ), 
 
 core_log as(
@@ -143,8 +142,8 @@ vip_level, level, rank_level,
 reason, event_type, 
 item_id, item_num, item_end
 from hive.demo_global_r.dwd_gserver_itemchange_live
-where part_date >= $start_date
-and part_date <= $end_date 
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}' 
 and item_id = '2'
 ), 
 
@@ -170,15 +169,8 @@ creative_name as creative,
 adgroup_name as adgroup, 
 campaign_id, creative_id, adgroup_id 
 from hive.demo_global_r.dwd_adjust_live
-where part_date >= $start_date
-and part_date <= $end_date
-), 
-
-ad_tag as(
-select role_id, 
-sum(ad_cost + ad_cost_noc_apportion + ad_cost_no_apportion + ad_cost_n_apportion) * 7.25 as adcost
-from hive.demo_global_r.dwd_adjust_live
-group by 1
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}'
 ), 
 
 daily_gserver_info as(
@@ -359,7 +351,7 @@ i.sincetimes_add, i.sincetimes_cost, h.sincetimes_end,
 d.core_add, d.core_cost, e.core_end, 
 d.free_add, d.free_cost, e.free_end, 
 d.paid_add, d.paid_cost, e.paid_end, 
-z.is_test, a.part_date
+case when z.is_test is null then 0 end as is_test, a.part_date
 from daily_gserver_info a
 left join daily_payment_info b
 on a.role_id = b.role_id and a.part_date = b.part_date
@@ -407,4 +399,3 @@ free_add, free_cost, free_end,
 paid_add, paid_cost, paid_end, 
 is_test, part_date
 from daily_info;
-###

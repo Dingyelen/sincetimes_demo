@@ -1,4 +1,3 @@
-###
 create table if not exists hive.demo_global_w.dws_user_info_di(
 role_id varchar,
 device_id varchar,
@@ -72,8 +71,8 @@ where exists(
 select 1
 from hive.demo_global_w.dws_user_daily_di
 where dws_user_daily_di.role_id = dws_user_info_di.role_id
-and dws_user_daily_di.part_date >= '$start_date'
-and dws_user_daily_di.part_date <= '$end_date'
+and dws_user_daily_di.part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and dws_user_daily_di.part_date <= '{today}'
 );
 
 drop table if exists hive.demo_global_w.temp_user_daily;
@@ -87,8 +86,8 @@ on a.currency = b.currency and date_format(a.date, '%Y-%m') = b.currency_time
 where exists
 (select 1
 from hive.demo_global_w.dws_user_daily_di z
-where part_date >= $start_date
-and  part_date <= $end_date
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}'
 and a.role_id = z.role_id
 );
 
@@ -223,4 +222,3 @@ drop table if exists hive.demo_global_w.temp_user_daily;
 drop table if exists hive.demo_global_w.temp_user_info;
 drop table if exists hive.demo_global_w.temp_user_first_info;
 drop table if exists hive.demo_global_w.temp_user_adcost;
-###

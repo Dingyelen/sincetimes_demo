@@ -1,4 +1,3 @@
-###
 create table if not exists hive.demo_global_w.dws_user_daily_derive_di(
 date date, 
 role_id varchar, 
@@ -22,7 +21,9 @@ with(
 partitioned_by = array['part_date']
 );
 
-delete from hive.demo_global_w.dws_user_daily_derive_di where part_date >= $start_date and part_date <= $end_date;
+delete from hive.demo_global_w.dws_user_daily_derive_di 
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}';
 
 insert into hive.demo_global_w.dws_user_daily_derive_di(
 date, role_id, login_days, 
@@ -35,8 +36,8 @@ before_date, after_date, part_date
 with active_role as(
 select distinct role_id
 from hive.demo_global_w.dws_user_daily_di
-where part_date >= $start_date 
-and part_date <= $end_date
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}'
 ), 
 
 user_daily as(
@@ -88,6 +89,5 @@ money_ac, appmoney_ac, webmoney_ac,
 sincetimes_end, core_end, free_end, paid_end, 
 before_date, after_date, part_date
 from daily_boolean_cal
-where part_date >= $start_date
-and part_date <= $end_date
-###
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}'
