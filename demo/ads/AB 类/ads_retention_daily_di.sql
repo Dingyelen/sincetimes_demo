@@ -8,8 +8,8 @@ part_date varchar
 with(partitioned_by = array['part_date']);
 
 delete from hive.demo_global_w.ads_retention_daily_di
-where part_date >= date_format(date_add('day', -31, date($start_date)), '%Y-%m-%d')
-and part_date <= $end_date;
+where part_date >= date_format(date_add('day', -31, date('{yesterday}')), '%Y-%m-%d')
+and part_date <= '{today}';
 
 insert into hive.demo_global_w.ads_retention_daily_di
 (date, retention_day, dau, active_users, part_date)
@@ -18,8 +18,8 @@ with user_daily as(
 select date, part_date, role_id, 
 level_min, level_max, viplevel_min, viplevel_max, money
 from hive.demo_global_w.dws_user_daily_di 
-where part_date >= date_format(date_add('day', -31, date($start_date)), '%Y-%m-%d')
-and part_date <= $end_date
+where part_date >= date_format(date_add('day', -31, date('{yesterday}')), '%Y-%m-%d')
+and part_date <= '{today}'
 ), 
 
 user_daily_join as
