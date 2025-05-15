@@ -1,4 +1,3 @@
-###
 create table if not exists hive.demo_global_w.dws_core_snapshot_di(
 date date, 
 role_id varchar, 
@@ -14,8 +13,8 @@ part_date varchar
 with(partitioned_by = array['part_date']);
 
 delete from hive.demo_global_w.dws_core_snapshot_di
-where part_date >= $start_date
-and part_date <= $end_date;
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}';
 
 insert into hive.demo_global_w.dws_core_snapshot_di(
 date, role_id, 
@@ -32,8 +31,8 @@ channel, zone_id, alliance_id, app_id,
 vip_level, level, rank_level, power, 
 payment_itemid, currency, money, online_time
 from hive.demo_global_r.dwd_merge_base_live
-where part_date >= $start_date
-and part_date <= $end_date
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}'
 ), 
 
 core_log_base as(
@@ -46,8 +45,8 @@ reason, event_type,
 coalesce(free_num, 0) as free_num, coalesce(paid_num, 0) as paid_num, 
 coalesce(free_end, 0) as free_end, coalesce(paid_end, 0) as paid_end
 from hive.demo_global_r.dwd_gserver_corechange_live
-where part_date >= $start_date
-and part_date <= $end_date
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}'
 ), 
 
 core_log as(
@@ -119,4 +118,3 @@ and a.role_id = b.role_id
 left join daily_core_last c
 on a.part_date = c.part_date
 and a.role_id = c.role_id;
-###

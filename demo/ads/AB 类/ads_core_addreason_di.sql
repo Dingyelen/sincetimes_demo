@@ -1,4 +1,3 @@
-###
 create table if not exists hive.demo_global_w.ads_core_addreason_di
 (date date,
 zone_id varchar,
@@ -11,8 +10,8 @@ part_date varchar
 with(partitioned_by = array['part_date']);
 
 delete from hive.demo_global_w.ads_core_addreason_di
-where part_date >= $start_date
-and part_date <= $end_date;
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}';
 
 insert into hive.demo_global_w.ads_core_addreason_di
 (date, zone_id, channel,
@@ -22,8 +21,8 @@ part_date)
 with dws_core_daily as(
 select date, role_id, coreadd_detail, corecost_detail, core_end, part_date
 from hive.demo_global_w.dws_core_snapshot_di
-where part_date>=$start_date
-and part_date<=$end_date
+where part_date >= date_format(date_add('day', -6, date '{yesterday}'), '%Y-%m-%d')
+and part_date <= '{today}'
 ),
 
 dws_core_add_reason as(
@@ -43,7 +42,7 @@ date_diff('day', b.install_date, b.firstpay_date) as firstpay_interval_days
 from dws_core_add_reason a
 left join hive.demo_global_w.dws_user_info_di b
 on a.role_id = b.role_id
-where b.is_test is null
+where b.is_test = 0
 ),
 
 core_daily_agg as(
@@ -60,4 +59,3 @@ reason, core_add, users,
 part_date
 from core_daily_agg
 ;
-###
