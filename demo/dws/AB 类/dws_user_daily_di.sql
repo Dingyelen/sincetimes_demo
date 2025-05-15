@@ -352,7 +352,7 @@ i.sincetimes_add, i.sincetimes_cost, h.sincetimes_end,
 d.core_add, d.core_cost, e.core_end, 
 d.free_add, d.free_cost, e.free_end, 
 d.paid_add, d.paid_cost, e.paid_end, 
-case when z.is_test is null then 0 end as is_test, a.part_date
+case when z.is_test is null then 0 else z.is_test end as is_test, a.part_date
 from daily_gserver_info a
 left join daily_payment_info b
 on a.role_id = b.role_id and a.part_date = b.part_date
