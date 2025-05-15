@@ -16,6 +16,7 @@ payuser_ac bigint,
 money_ac decimal(36, 2),
 moneyrmb_ac decimal(36, 2),
 new_users bigint,
+adcost double,
 part_date varchar
 )
 with(partitioned_by = array['part_date']);
@@ -28,7 +29,7 @@ insert into hive.demo_global_w.ads_user_retention_di
 (date, install_date, zone_id, channel, os, break_type, retention_day, 
 active_users, pay_users, newpay_users, money, money_rmb, online_time, 
 payuser_ac, money_ac, moneyrmb_ac, 
-new_users, part_date)
+new_users, adcost, part_date)
 
 with user_daily as(
 select date, part_date, role_id, 
@@ -37,27 +38,35 @@ currency, money, online_time
 from hive.demo_global_w.dws_user_daily_di 
 ), 
 
+user_info as(
+select role_id, is_test, adcost, 
+install_date, date(lastlogin_ts) as lastlogin_date, 
+firstpay_date, firstpay_goodid, firstpay_level,
+zone_id, channel, os, 
+(case when install_date=firstpay_date then 'firstdate_break' 
+when firstpay_date is not null then 'other_break'
+else 'not_break' end) as break_type
+from hive.demo_global_w.dws_user_info_di
+where install_date >= date('{yesterday}')
+and install_date <= date('{today}')
+), 
+
 user_daily_join as(
 select a.date, a.part_date, a.role_id, 
 a.level_min, a.level_max, a.viplevel_min, a.viplevel_max,
-a.money, a.money * z.rate as money_rmb, a.online_time, 
-b.install_date, date(b.lastlogin_ts) as lastlogin_date, 
+a.money, a.money * z.rate as money_rmb, b.adcost, a.online_time, 
+b.install_date, b.lastlogin_date, 
 b.firstpay_date, b.firstpay_goodid, b.firstpay_level,
-b.zone_id, b.channel, b.os, 
-(case when b.install_date=b.firstpay_date then 'firstdate_break' 
-when b.firstpay_date is not null then 'other_break'
-else 'not_break' end) as break_type,  
+b.zone_id, b.channel, b.os, b.break_type,  
 date_diff('day', b.install_date, a.date) as retention_day,
 date_diff('day', b.firstpay_date, a.date) as pay_retention_day,
 date_diff('day', b.install_date, firstpay_date) as firstpay_interval_days
 from user_daily a
-left join hive.demo_global_w.dws_user_info_di b
+left join user_info b
 on a.role_id = b.role_id
 left join mysql_bi_r."gbsp-bi-bigdata".t_currency_rate z
 on a.currency = z.currency and date_format(a.date, '%Y-%m') = z.currency_time 
-where b.is_test = 0
-and b.install_date >= date('{yesterday}')
-and b.install_date <= date('{today}')
+where b.is_test = 0 
 ),
 
 retention_info as(
@@ -74,8 +83,12 @@ group by 1, 2, 3, 4, 5, 6, 7
 
 retention_all as(
 select install_date, zone_id, channel, os, break_type, 
-sum(case when retention_day = 0 then active_users else null end) as new_users
-from retention_info
+count(distinct role_id) as new_users, 
+sum(adcost) as adcost
+from user_info
+where is_test = 0
+and install_date >= date('{yesterday}')
+and install_date <= date('{today}')
 group by 1, 2, 3, 4, 5
 ),
 
@@ -89,7 +102,7 @@ retenion_info_cube as(
 select date_add('day', a.retention_day, a.install_date) as date, 
 a.install_date, a.zone_id, a.channel, a.os, a.break_type, a.retention_day,
 b.active_users, b.pay_users, b.newpay_users, b.money, b.money_rmb, b.online_time, 
-c.new_users
+c.new_users, c.adcost
 from data_cube a
 left join retention_info b
 on a.install_date = b.install_date 
@@ -114,6 +127,6 @@ sum(money) over (partition by install_date, zone_id, channel, break_type, os ord
 rows between unbounded preceding and current row) as money_ac,
 sum(money_rmb) over (partition by install_date, zone_id, channel, break_type, os order by retention_day
 rows between unbounded preceding and current row) as moneyrmb_ac, 
-new_users, date_format(install_date, '%Y-%m-%d') as part_date
+new_users, adcost, date_format(install_date, '%Y-%m-%d') as part_date
 from retenion_info_cube
 ;
