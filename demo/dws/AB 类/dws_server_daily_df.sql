@@ -86,7 +86,7 @@ left join user_daily_derive b
 on a.role_id = b.role_id and a.part_date = b.part_date
 left join hive.demo_global_w.dws_user_info_di z
 on a.role_id = z.role_id
-where z.is_test is null
+where z.is_test = 0
 ),
 
 daily_info as
