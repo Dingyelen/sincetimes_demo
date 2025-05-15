@@ -93,7 +93,7 @@ with base_log as(
 select part_date, event_name, event_time, 
 date(event_time) as date, 
 role_id, open_id, adid, device_id, 
-channel, zone_id, alliance_id, app_id, 
+channel, zone_id, os_name, alliance_id, app_id, 
 vip_level, level, rank_level, power, 
 pay_source, payment_itemid, currency, money, 
 online_time, 
@@ -229,6 +229,7 @@ first_value(device_id) ignore nulls over(partition by role_id, part_date order b
 first_value(open_id) ignore nulls over(partition by role_id, part_date order by event_time rows between unbounded preceding and unbounded following) as open_id, 
 first_value(channel) ignore nulls over(partition by role_id, part_date order by event_time rows between unbounded preceding and unbounded following) as channel, 
 first_value(zone_id) ignore nulls over(partition by role_id, part_date order by event_time rows between unbounded preceding and unbounded following) as zone_id, 
+first_value(os_name) ignore nulls over(partition by role_id, part_date order by event_time rows between unbounded preceding and unbounded following) as os_name, 
 last_value(alliance_id) ignore nulls over(partition by role_id, part_date order by event_time rows between unbounded preceding and unbounded following) as alliance_id
 from base_log
 ), 
@@ -332,7 +333,7 @@ select
 a.date, 
 a.role_id, c.device_id, c.open_id, c.adid, 
 c.app_id, c.channel, c.zone_id, c.alliance_id, 
-coalesce(f.os, g.os) as os, coalesce(f.ip, g.ip) as ip, coalesce(f.country, g.country) as country, 
+coalesce(f.os, g.os, c.os_name) as os, coalesce(f.ip, g.ip) as ip, coalesce(f.country, g.country) as country, 
 coalesce(f.network, g.network) as network, 
 coalesce(f.campaign, g.campaign) as campaign, coalesce(f.creative, g.creative) as creative, coalesce(f.adgroup, g.adgroup) as adgroup, 
 coalesce(f.campaign_id, g.campaign_id) as campaign_id, 
