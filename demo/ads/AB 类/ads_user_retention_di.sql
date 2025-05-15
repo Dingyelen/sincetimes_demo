@@ -21,8 +21,8 @@ part_date varchar
 with(partitioned_by = array['part_date']);
 
 delete from hive.demo_global_w.ads_user_retention_di
-where part_date >= $start_date
-and part_date <= $end_date;
+where part_date >= '{yesterday}'
+and part_date <= '{today}';
 
 insert into hive.demo_global_w.ads_user_retention_di
 (date, install_date, zone_id, channel, os, break_type, retention_day, 
@@ -56,8 +56,8 @@ on a.role_id = b.role_id
 left join mysql_bi_r."gbsp-bi-bigdata".t_currency_rate z
 on a.currency = z.currency and date_format(a.date, '%Y-%m') = z.currency_time 
 where b.is_test is null
-and b.install_date >= date($start_date)
-and b.install_date <= date($end_date)
+and b.install_date >= date('{yesterday}')
+and b.install_date <= date('{today}')
 ),
 
 retention_info as(

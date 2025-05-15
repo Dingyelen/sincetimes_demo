@@ -54,8 +54,8 @@ from user_daily_join
 
 date_cube_agg as(
 select a.date, a.part_date, b.zone_id, b.channel, b.os, b.level, b.vip_level, 
-count(distinct case when date_diff('day', b.date, a.date) between 1 and 7 then role_id else null end) as last7_dau, 
-count(distinct case when date_diff('day', b.date, a.date) between 1 and 30 then role_id else null end) as last30_dau
+count(distinct case when date_diff('day', b.date, a.date) between 0 and 6 then role_id else null end) as last7_dau, 
+count(distinct case when date_diff('day', b.date, a.date) between 0 and 29 then role_id else null end) as last30_dau
 from date_cube a
 left join user_daily_join b
 on a.date >= b.date
