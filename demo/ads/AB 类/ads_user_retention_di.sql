@@ -55,7 +55,7 @@ left join hive.demo_global_w.dws_user_info_di b
 on a.role_id = b.role_id
 left join mysql_bi_r."gbsp-bi-bigdata".t_currency_rate z
 on a.currency = z.currency and date_format(a.date, '%Y-%m') = z.currency_time 
-where b.is_test is null
+where b.is_test = 0
 and b.install_date >= date('{yesterday}')
 and b.install_date <= date('{today}')
 ),

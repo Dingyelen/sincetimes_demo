@@ -37,7 +37,7 @@ date_diff('day', b.install_date, firstpay_date) as firstpay_interval_days
 from user_daily a
 left join hive.demo_global_w.dws_user_info_di b
 on a.role_id = b.role_id
-where b.is_test is null
+where b.is_test = 0
 ), 
 
 data_cube as(
